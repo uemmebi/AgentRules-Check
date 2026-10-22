@@ -47,3 +47,11 @@ No claims of a physical phone, a screen reader, Firefox/Safari, remote CI succes
 ## Before a public release
 
 Review the actual repository identity and public visibility, choose a license, test with a screen reader and physical phone, deploy the static output over HTTPS, and repeat first-load/offline checks on that origin. The launch copy is a draft and must not imply user feedback, a video or a deployment that does not exist.
+
+## Release hardening follow-up (22 October 2026)
+
+The original commit's remote Checks workflow succeeded: https://github.com/uemmebi/AgentRules-Check/actions/runs/39674759319.
+
+The follow-up adds an explicit dependency-audit gate, scope-isolated caches, browser lifecycle tests (A to B to A rollback and a second installation on the same origin), a production CSP, and post-deployment browser and HTTP checks. Local lint, all 33 unit tests, build and dependency audit passed on 22 October. The local Playwright browser download failed; browser results must be taken from the follow-up commit's remote CI, not inferred from the earlier run.
+
+License approval, authenticated Pages setup and a successful public deployment remain separate release gates. No physical-phone or screen-reader check is claimed. See [release operations](release.md).

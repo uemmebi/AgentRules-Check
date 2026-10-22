@@ -8,7 +8,7 @@ test('demo, line references, export, keyboard, themes and responsive layouts', a
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto('/');
+  await page.goto('./');
   await expect(
     page.getByRole('button', { name: 'Check instructions' }),
   ).toBeDisabled();
@@ -88,7 +88,7 @@ test('demo, line references, export, keyboard, themes and responsive layouts', a
 test('real file upload, drag-drop, comparison and rule toggles', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByLabel('Upload file 1').setInputFiles({
     name: 'AGENTS.md',
     mimeType: 'text/markdown',
@@ -139,10 +139,11 @@ test('invalid input, safe literal rendering, no remote analysis and no false con
   page,
 }) => {
   const remote: string[] = [];
+  const origin = new URL(test.info().project.use.baseURL!).origin;
   page.on('request', (r) => {
-    if (!r.url().startsWith('http://127.0.0.1:4173')) remote.push(r.url());
+    if (new URL(r.url()).origin !== origin) remote.push(r.url());
   });
-  await page.goto('/');
+  await page.goto('./');
   await page.getByLabel('Upload file 1').setInputFiles({
     name: 'large.md',
     mimeType: 'text/markdown',
@@ -183,7 +184,7 @@ test('cached production app reloads offline and analyzes without a network', asy
   page,
   context,
 }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
@@ -193,13 +194,36 @@ test('cached production app reloads offline and analyzes without a network', asy
   await page.getByRole('button', { name: 'Load demo example' }).click();
   await page.getByRole('button', { name: 'Check instructions' }).click();
   await expect(page.locator('.count')).toHaveText('3 findings');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download Markdown' }).click();
+  expect((await download).suggestedFilename()).toBe(
+    'agent-rules-check-report.md',
+  );
+  const cachedURLs = await page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.ready;
+    const prefix =
+      'agent-rules-check-scope-' + encodeURIComponent(registration.scope) + '-';
+    const keys = (await caches.keys()).filter((key) => key.startsWith(prefix));
+    return (
+      await Promise.all(
+        keys.map(async (key) =>
+          (await (await caches.open(key)).keys()).map((request) => request.url),
+        ),
+      )
+    ).flat();
+  });
+  expect(cachedURLs.length).toBeGreaterThan(2);
+  for (const url of cachedURLs)
+    expect(new URL(url).pathname).toMatch(
+      /\/(?:index\.html|favicon\.svg|assets\/[^/]+)$/,
+    );
   await context.setOffline(false);
 });
 
 test('clipboard failure has a download fallback and rejected uploads preserve text', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'Load demo example' }).click();
   const original = await page
     .getByRole('textbox', { name: 'File 1', exact: true })

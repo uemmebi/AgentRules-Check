@@ -1,0 +1,10 @@
+# For hosts that support _headers (GitHub Pages ignores this file).
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Cache-Control: no-cache
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

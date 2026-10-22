@@ -1,23 +1,26 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
+const output = resolve(process.argv[2] || 'dist');
 const files = [
   'index.html',
   'favicon.svg',
-  ...(await readdir('dist/assets')).map((name) => `assets/${name}`),
+  ...(await readdir(`${output}/assets`)).map((name) => `assets/${name}`),
 ];
 const hash = createHash('sha256');
-for (const file of files) hash.update(await readFile(`dist/${file}`));
+for (const file of files) hash.update(await readFile(`${output}/${file}`));
 const version = hash.digest('hex').slice(0, 16);
 await writeFile(
-  'dist/sw.js',
+  `${output}/sw.js`,
   `// Generated from the exact build assets; no user content is cached.
-const CACHE = 'agent-rules-check-${version}';
+const PREFIX = 'agent-rules-check-scope-' + encodeURIComponent(self.registration.scope) + '-';
+const CACHE = PREFIX + '${version}';
 const FILES = ${JSON.stringify(files)};
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES.map(file => new Request(new URL(file, self.registration.scope), {cache: 'reload'})))));
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('agent-rules-check-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith(PREFIX) && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
