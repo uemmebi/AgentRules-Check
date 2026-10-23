@@ -2,7 +2,7 @@
 
 ## One-time decisions
 
-- Choose the project's license before calling it open source. Add the approved LICENSE and matching package metadata. No license choice is implicit in this change.
+- The project uses the [MIT License](../LICENSE). Package metadata and the lockfile declare the same SPDX identifier.
 - In Settings → Pages, select GitHub Actions. Restrict the github-pages environment to main; enable HTTPS. The workflow also rejects other branches.
 - GitHub Pages cannot apply arbitrary response headers. HTML embeds CSP and no-referrer, but full response-header enforcement requires a compatible static host or a configured proxy. `public/_headers` is a ready configuration for hosts supporting that format; Pages ignores it. Choose this hosting option explicitly before declaring full header enforcement.
 
