@@ -43,6 +43,7 @@ npm run preview
 npx playwright install chromium
 npm run build
 npm run test:e2e
+npm run test:cache
 ```
 
 On Linux CI, use `npx playwright install --with-deps chromium` to install required OS libraries too. Alternatively, use an existing Chromium installation:
@@ -83,7 +84,7 @@ Actual network activity:
 
 Only the theme choice (`arc-theme`) is saved in localStorage. The offline cache holds application assets, never instruction files or reports. Reloading clears the in-memory inputs; the app does not explicitly persist them, although browser session restoration or extensions may retain form data. Copy writes the report to your system clipboard; downloading saves it wherever your browser normally puts downloads. Remove sensitive reports from those places yourself.
 
-The offline worker needs HTTPS or localhost and storage permission. First-time access requires a connection; wait for `navigator.serviceWorker.ready` in browser devtools before disconnecting. Blocked service workers or storage do not prevent local analysis in an already loaded tab, but they prevent offline reopening. A new deployment takes over after old app tabs close; retain old hashed assets during rollout where your host supports that. Clear site data to reset caches and theme.
+The offline worker needs HTTPS or localhost and storage permission. First-time access requires a connection; wait for `navigator.serviceWorker.ready` in browser devtools before disconnecting. Blocked service workers or storage do not prevent local analysis in an already loaded tab, but they prevent offline reopening. Caches are isolated by service-worker scope. A new deployment takes over after old app tabs close; retain old hashed assets during rollout where your host supports that. Clear site data to reset caches and theme.
 
 ## Heuristics and limits
 
@@ -113,11 +114,11 @@ The checkout's existing origin is `uemmebi/AgentRules-Check`; `umbertocodes/agen
 1. Run the checks above and review the real screenshots.
 2. Choose a license and complete a final review of repository contents. A license has deliberately **not** been applied; without one, normal copyright restrictions apply. Do not advertise the project as open source until a license is chosen.
 3. Push the project to the intended GitHub repository. CI checks formatting, types, tests, build and Chromium workflows.
-4. For GitHub Pages, select **Settings → Pages → Build and deployment → GitHub Actions**. Run the included **Deploy Pages** workflow manually from Actions. It builds and uploads `dist/`, then deploys through the official Pages action. GitHub supplies the actual deployment URL. The relative Vite base supports project subpaths. The workflow does not run automatically on push.
+4. For GitHub Pages, select **Settings → Pages → Build and deployment → GitHub Actions**. Run the included **Deploy Pages** workflow manually from Actions. It builds and uploads `dist/`, then deploys through the official Pages action. GitHub supplies the actual deployment URL. The relative Vite base supports project subpaths. The workflow does not run automatically on push and only accepts `main`. After deployment it runs browser checks against the returned URL, inspects HTTP headers and uploads verification artifacts. A failed post-deploy check does not roll back the published site; see [release operations](docs/release.md).
 5. Alternatively, upload `dist/` to an HTTPS static host. Serve assets with correct MIME types; serve `sw.js` with revalidation (`Cache-Control: no-cache`) and serve hashed assets immutably. No SPA fallback routing is required beyond the root app URL.
 6. Validate a fresh load, first cache installation and offline reload on the deployed origin. Local tests do not establish a deployed site's readiness.
 
-Recommended host headers: `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and a production Content Security Policy such as `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'`. GitHub Pages does not offer arbitrary custom response headers; choose a host supporting them if enforcement is required. Do not apply production CSP restrictions to Vite HMR without adapting the development policy.
+A production CSP and `no-referrer` policy are embedded in HTML. The development server removes the CSP to support Vite HMR. `public/_headers` supplies response headers for compatible static hosts, but GitHub Pages ignores that file. The embedded policy cannot enforce `frame-ancestors`, and it cannot replace `nosniff`. Recommended host headers: `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and a production Content Security Policy such as `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'`. GitHub Pages does not offer arbitrary custom response headers; choose a host supporting them if enforcement is required. Do not apply production CSP restrictions to Vite HMR without adapting the development policy.
 
 ## Small roadmap
 

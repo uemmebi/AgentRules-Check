@@ -5,3 +5,4 @@ test-results/
 *.tsbuildinfo
 .env*
 !.env.example
+deployment-check.json

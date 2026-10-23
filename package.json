@@ -10,7 +10,8 @@
     "test": "vitest run",
     "lint": "tsc --noEmit && prettier --check .",
     "test:e2e": "playwright test",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:cache": "playwright test --config playwright.cache.config.ts"
   },
   "dependencies": {
     "react": "^19.2.0",
